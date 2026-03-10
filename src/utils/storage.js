@@ -47,12 +47,12 @@ export function updateProgress(updates) {
   return updated;
 }
 
-export function markSceneCompleted(sceneId) {
+export function markSceneCompleted(sceneId, learnedWordCount = 3) {
   const progress = getProgress();
   if (!progress.completedScenes.includes(sceneId)) {
     progress.completedScenes.push(sceneId);
     progress.xp += 20;
-    progress.wordsLearned += 3; // 平均每场景3个词
+    progress.wordsLearned += learnedWordCount;
     progress.level = Math.floor(progress.xp / 100) + 1;
   }
   progress.lastStudyDate = new Date().toISOString().split('T')[0];

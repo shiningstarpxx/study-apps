@@ -5,11 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "ai:bridge": "node server/ai-bridge.js",
+    "dev:ai": "concurrently -k \"npm run ai:bridge\" \"npm run dev\"",
     "build": "vite build",
+    "build:app": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:sync": "npm run build && npx cap sync",
+    "ios:add": "npx cap add ios",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
     "framer-motion": "^12.35.1",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
@@ -21,6 +31,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

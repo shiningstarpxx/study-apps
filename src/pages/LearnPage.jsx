@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { episodes, getAllScenes } from '../data/episodes';
-import { getProgress, markSceneCompleted, updateSRS, updateDailyTask } from '../utils/storage';
+import { getProgress, markSceneCompleted, updateProgress, updateSRS, updateDailyTask } from '../utils/storage';
 
 export default function LearnPage({ onNavigate }) {
-  const [currentEpisodeIdx, setCurrentEpisodeIdx] = useState(0);
-  const [currentSceneIdx, setCurrentSceneIdx] = useState(0);
+  const savedProgress = getProgress();
+  const savedEpisodeIdx = episodes.findIndex(ep => ep.id === savedProgress.currentEpisode);
+  const initialEpisodeIdx = savedEpisodeIdx >= 0 ? savedEpisodeIdx : 0;
+  const initialSceneIdx = Math.min(
+    savedProgress.currentSceneIndex || 0,
+    Math.max((episodes[initialEpisodeIdx]?.scenes.length || 1) - 1, 0)
+  );
+
+  const [currentEpisodeIdx, setCurrentEpisodeIdx] = useState(initialEpisodeIdx);
+  const [currentSceneIdx, setCurrentSceneIdx] = useState(initialSceneIdx);
   const [showTranslation, setShowTranslation] = useState(false);
   const [showKeywords, setShowKeywords] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
@@ -71,7 +79,7 @@ export default function LearnPage({ onNavigate }) {
 
   const handleComplete = useCallback(() => {
     if (!scene) return;
-    markSceneCompleted(scene.id);
+    markSceneCompleted(scene.id, scene.keywords.length);
     updateDailyTask('new_scenes');
 
     // 更新 SRS
@@ -116,6 +124,14 @@ export default function LearnPage({ onNavigate }) {
     setActiveKeyword(null);
   }, [currentSceneIdx, currentEpisodeIdx]);
 
+  useEffect(() => {
+    if (!episode) return;
+    updateProgress({
+      currentEpisode: episode.id,
+      currentSceneIndex: currentSceneIdx,
+    });
+  }, [episode, currentSceneIdx]);
+
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -158,7 +174,7 @@ export default function LearnPage({ onNavigate }) {
           <div>
             <h2>🎬 台词学习</h2>
             <div className="subtitle">
-              {episode.id} · {episode.title} · {episode.titleCn}
+              {episode.id} · {episode.title} · {episode.titleCn} · {episode.contentStatus === 'detailed' ? '精编课程' : '扩展课程'}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -184,6 +200,41 @@ export default function LearnPage({ onNavigate }) {
       </div>
 
       <div className="page-body" style={{ maxWidth: 860, margin: '0 auto' }}>
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card-title">🗺️ 第一季课程导航</div>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 12 }}>
+            {episode.teachingGoal}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+            {episode.learningFocus?.map(focus => (
+              <span key={focus} className="tag tag-primary">{focus}</span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {episodes.map((ep, idx) => {
+              const completedScenes = ep.scenes.filter(item => progress.completedScenes.includes(item.id)).length;
+              const isActiveEpisode = idx === currentEpisodeIdx;
+              return (
+                <button
+                  key={ep.id}
+                  className={`btn btn-sm ${isActiveEpisode ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => {
+                    setCurrentEpisodeIdx(idx);
+                    setCurrentSceneIdx(0);
+                    setShowTranslation(false);
+                    setShowKeywords(false);
+                    setShowGrammar(false);
+                    setActiveKeyword(null);
+                  }}
+                  title={`${ep.titleCn} · ${completedScenes}/${ep.scenes.length}`}
+                >
+                  {ep.id} · {completedScenes}/{ep.scenes.length}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 台词卡片 */}
         <div className="dialogue-card animate-slide-in" ref={dialogueRef}>
           <div className="character-info">

@@ -1,6 +1,8 @@
 // Billions (亿万) - 台词学习数据库
 // 每条台词包含: 原文、中文翻译、场景描述、关键词汇、难度等级、语法点
 
+import { expandedSeasonOneEpisodes } from './seasonOneExpansion';
+
 export const episodes = [
   {
     id: 'S01E01',
@@ -269,6 +271,9 @@ export const episodes = [
     episode: 3,
     title: 'YumTime',
     titleCn: '美味时光',
+    contentStatus: 'detailed',
+    learningFocus: ['风险表达', '市场心理', '二元选择句式'],
+    teachingGoal: '巩固风险、市场、调查威慑三类中高频表达。',
     scenes: [
       {
         id: 'S01E03-001',
@@ -353,7 +358,8 @@ export const episodes = [
         tags: ['family', 'determination', 'personal']
       }
     ]
-  }
+  },
+  ...expandedSeasonOneEpisodes
 ];
 
 // 学习等级定义
@@ -404,9 +410,27 @@ export function getAllScenes() {
       episodeTitle: ep.title,
       episodeTitleCn: ep.titleCn,
       season: ep.season,
-      episode: ep.episode
+      episode: ep.episode,
+      contentStatus: ep.contentStatus || 'detailed',
+      learningFocus: ep.learningFocus || [],
+      teachingGoal: ep.teachingGoal || ''
     }))
   );
+}
+
+export function getEpisodeCatalog() {
+  return episodes.map(ep => ({
+    id: ep.id,
+    season: ep.season,
+    episode: ep.episode,
+    title: ep.title,
+    titleCn: ep.titleCn,
+    contentStatus: ep.contentStatus || 'detailed',
+    learningFocus: ep.learningFocus || [],
+    teachingGoal: ep.teachingGoal || '',
+    sceneCount: ep.scenes.length,
+    keywordCount: ep.scenes.reduce((sum, scene) => sum + scene.keywords.length, 0)
+  }));
 }
 
 // 根据难度获取台词

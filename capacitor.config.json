@@ -1,0 +1,9 @@
+{
+  "appId": "com.shiningstarpxx.studyapps",
+  "appName": "Study Apps",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

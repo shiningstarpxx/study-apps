@@ -1,24 +1,34 @@
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getAllScenes } from '../data/episodes';
-import { generateSocraticDialogue, generateFeedback, createSocraticSession } from '../utils/socratic';
+import { createSocraticSession } from '../utils/socratic';
 import { addSocraticSession, updateDailyTask } from '../utils/storage';
+import {
+  chatWithAI,
+  checkBridgeHealth,
+  getBridgeSettings,
+  getSocraticSystemPrompt,
+  saveBridgeSettings,
+} from '../utils/ai';
 
-function evaluateResponse(text) {
-  const length = text.length;
-  const hasChinese = /[\u4e00-\u9fa5]/.test(text);
-  const hasEnglish = /[a-zA-Z]/.test(text);
+const defaultBridgeSettings = getBridgeSettings();
 
-  let score = 2;
-  if (length > 20) score += 1;
-  if (length > 50) score += 1;
-  if (hasChinese && hasEnglish) score += 1;
-  if (text.includes('因为') || text.includes('because') || text.includes('所以')) score += 1;
+function formatBridgeError(error) {
+  const message = error?.message || String(error);
 
-  return Math.min(score, 5);
-}
+  if (message.includes('Failed to fetch')) {
+    return '连接不到本地 AI Bridge。请先启动桥接服务，再测试连接。';
+  }
+  if (message.includes('BRIDGE_NOT_CONFIGURED')) {
+    return 'Bridge 已启动，但还没有配置 CLI 命令。请先设置 `LLM_CLI_COMMAND` 或 `LLM_CLI_TEMPLATE`。';
+  }
+  if (message.includes('CLI_TIMEOUT')) {
+    return '本地大模型响应超时，请检查你的命令行封装是否卡住。';
+  }
+  if (message.includes('CLI_EMPTY_RESPONSE')) {
+    return 'CLI 已执行，但没有返回任何内容。请检查包装命令的 stdout 输出。';
+  }
 
-function getRandomDelay() {
-  return 800 + Math.random() * 800;
+  return message;
 }
 
 export default function SocraticPage() {
@@ -26,10 +36,17 @@ export default function SocraticPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [currentPhase, setCurrentPhase] = useState(0);
-  const [currentStage, setCurrentStage] = useState(0);
   const [session, setSession] = useState(null);
   const [isThinking, setIsThinking] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [phaseTurnCount, setPhaseTurnCount] = useState(0);
+  const [bridgeSettings, setBridgeSettings] = useState(defaultBridgeSettings);
+  const [bridgeUrlInput, setBridgeUrlInput] = useState(defaultBridgeSettings.bridgeUrl);
+  const [bridgeStatus, setBridgeStatus] = useState('idle');
+  const [bridgeInfo, setBridgeInfo] = useState(null);
+  const [bridgeError, setBridgeError] = useState('');
+  const [showBridgeSetup, setShowBridgeSetup] = useState(false);
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -39,133 +56,255 @@ export default function SocraticPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const startSession = (scene) => {
+  const runBridgeHealthCheck = useCallback(async (settings = bridgeSettings) => {
+    setBridgeStatus('checking');
+    setBridgeError('');
+
+    try {
+      const info = await checkBridgeHealth(settings);
+      setBridgeInfo(info);
+      setBridgeStatus(info.configured ? 'ready' : 'warning');
+      if (!info.configured) {
+        setBridgeError('Bridge 已启动，但还没有绑定你的 CLI 命令。');
+      }
+      return info;
+    } catch (error) {
+      setBridgeInfo(null);
+      setBridgeStatus('error');
+      setBridgeError(formatBridgeError(error));
+      throw error;
+    }
+  }, [bridgeSettings]);
+
+  useEffect(() => {
+    runBridgeHealthCheck(defaultBridgeSettings).catch(() => {});
+  }, [runBridgeHealthCheck]);
+
+  const handleSaveBridge = async () => {
+    const nextSettings = saveBridgeSettings({
+      bridgeUrl: bridgeUrlInput.trim() || defaultBridgeSettings.bridgeUrl,
+    });
+
+    setBridgeSettings(nextSettings);
+
+    try {
+      await runBridgeHealthCheck(nextSettings);
+      setShowBridgeSetup(false);
+    } catch {
+      setShowBridgeSetup(true);
+    }
+  };
+
+  const startSession = async (scene) => {
+    try {
+      const info = await runBridgeHealthCheck(bridgeSettings);
+      if (!info.configured) {
+        setShowBridgeSetup(true);
+        return;
+      }
+    } catch {
+      setShowBridgeSetup(true);
+      return;
+    }
+
     setSelectedScene(scene);
     const newSession = createSocraticSession(scene);
     setSession(newSession);
     setCurrentPhase(0);
-    setCurrentStage(0);
+    setPhaseTurnCount(0);
     setSessionComplete(false);
-
-    const phase = newSession.phases[0];
-    const firstQuestion = generateSocraticDialogue(scene, phase.type, phase.stages[0], true);
+    setIsThinking(true);
 
     setMessages([
       {
-        role: 'system',
-        content: `🏛️ 欢迎来到苏格拉底式英语学习！\n\n我们将一起深入探讨这句台词：\n\n"${scene.dialogue}"\n\n— ${scene.character}`,
+        role: 'model',
+        parts: [{
+          text: `🏛️ 本轮将调用你的本地命令行大模型，围绕这句台词做真实苏格拉底对话：\n\n"${scene.dialogue}"\n\n— ${scene.character}`,
+        }],
       },
       {
-        role: 'system',
-        content: `📍 第一阶段：${phase.title} ${phase.icon}\n\n${firstQuestion}`,
+        role: 'model',
+        parts: [{
+          text: `📏 英语主线约束\n\n${newSession.guardrails.map((rule, index) => `${index + 1}. ${rule}`).join('\n')}`,
+        }],
       },
     ]);
 
-    setTimeout(() => inputRef.current?.focus(), 100);
+    try {
+      const systemPrompt = getSocraticSystemPrompt(scene, newSession.phases[0], newSession);
+      const firstQuestion = await chatWithAI([], systemPrompt, bridgeSettings);
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', parts: [{ text: firstQuestion }] },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'model',
+          parts: [{ text: `❌ 连接本地模型失败：${formatBridgeError(error)}` }],
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
   };
 
-  const handleSend = () => {
-    if (!input.trim() || !session || isThinking) return;
+  const handleSend = async () => {
+    if (!input.trim() || !session || isThinking || sessionComplete) return;
 
-    const userMessage = input.trim();
+    const userText = input.trim();
+    const userMessage = { role: 'user', parts: [{ text: userText }] };
+    const nextMessages = [...messages, userMessage];
+
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setMessages(nextMessages);
     setIsThinking(true);
 
-    // 模拟苏格拉底式回应（延迟以模拟思考）
-    setTimeout(() => {
-      // 评估回答质量（简单启发式）
-      const quality = evaluateResponse(userMessage);
-      const feedback = generateFeedback(quality, selectedScene?.characterCn, true);
-
+    try {
       const phase = session.phases[currentPhase];
-      const nextStageIdx = currentStage + 1;
+      const systemPrompt = getSocraticSystemPrompt(selectedScene, phase, session);
+      const history = nextMessages.filter((message) => message.role === 'user' || message.role === 'model');
+      const reply = await chatWithAI(history, systemPrompt, bridgeSettings);
 
-      if (nextStageIdx < phase.stages.length) {
-        // 进入下一阶段
-        const nextQuestion = generateSocraticDialogue(
-          selectedScene, phase.type, phase.stages[nextStageIdx], true
-        );
-        setCurrentStage(nextStageIdx);
-        setMessages(prev => [
-          ...prev,
-          { role: 'system', content: feedback },
-          { role: 'system', content: nextQuestion },
-        ]);
-      } else if (currentPhase + 1 < session.phases.length) {
-        // 进入下一个主题
-        const nextPhase = session.phases[currentPhase + 1];
-        const nextQuestion = generateSocraticDialogue(
-          selectedScene, nextPhase.type, nextPhase.stages[0], true
-        );
-        setCurrentPhase(currentPhase + 1);
-        setCurrentStage(0);
-        setMessages(prev => [
-          ...prev,
-          { role: 'system', content: `${feedback}\n\n✅ 这个阶段完成了！` },
-          { role: 'system', content: `📍 下一阶段：${nextPhase.title} ${nextPhase.icon}\n\n${nextQuestion}` },
-        ]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', parts: [{ text: reply }] },
+      ]);
+
+      const nextPhaseTurnCount = phaseTurnCount + 1;
+      if (nextPhaseTurnCount >= 2) {
+        if (currentPhase + 1 < session.phases.length) {
+          setCurrentPhase((prev) => prev + 1);
+          setPhaseTurnCount(0);
+        } else {
+          setSessionComplete(true);
+          updateDailyTask('socratic');
+          addSocraticSession({
+            sceneId: selectedScene.id,
+            messagesCount: nextMessages.length + 1,
+            phases: session.phases.length,
+          });
+        }
       } else {
-        // 会话完成
-        setSessionComplete(true);
-        updateDailyTask('socratic');
-        addSocraticSession({
-          sceneId: selectedScene.id,
-          messagesCount: messages.length + 2,
-          phases: session.phases.length,
-        });
-        setMessages(prev => [
-          ...prev,
-          { role: 'system', content: feedback },
-          {
-            role: 'system',
-            content: `🎉 太棒了！苏格拉底对话完成！\n\n你已经从 **理解→词汇→语法** 三个维度深入学习了这句台词。\n\n记住：真正的学习不是记住答案，而是学会提问。苏格拉底说过："我知道我一无所知。" 保持好奇心！\n\n💡 建议：去做一个小测验来巩固学习效果吧！`,
-          },
-        ]);
+        setPhaseTurnCount(nextPhaseTurnCount);
       }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'model',
+          parts: [{ text: `❌ 本地模型交互异常：${formatBridgeError(error)}` }],
+        },
+      ]);
+    } finally {
       setIsThinking(false);
-    }, getRandomDelay());
+    }
   };
 
-  // 场景选择界面
+  if (showBridgeSetup) {
+    return (
+      <div className="page-transition" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div className="card" style={{ maxWidth: 560, width: '100%' }}>
+          <div className="card-title">🖥️ 连接本地 AI Bridge</div>
+          <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+            浏览器和 iOS WebView 不能直接调用你电脑上的命令行模型，所以需要先启动一个本地 Bridge 服务，
+            再由 Bridge 去执行你的 CLI 封装命令。
+          </p>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 8 }}>Bridge 地址</div>
+            <input
+              type="text"
+              value={bridgeUrlInput}
+              onChange={(event) => setBridgeUrlInput(event.target.value)}
+              placeholder="http://127.0.0.1:8787"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div style={{ padding: 14, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', marginBottom: 16, fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>启动方式（默认使用 gemini-internal）</div>
+            <div>1. 在终端执行 <code style={{ color: 'var(--primary)' }}>npm run ai:bridge</code></div>
+            <div>2. 回到这里点"测试连接"或"保存并开始"</div>
+            <div style={{ marginTop: 6, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              已默认绑定 <code>gemini-internal -p</code>，如需更换可设置环境变量 LLM_CLI_COMMAND
+            </div>
+          </div>
+
+          {bridgeStatus !== 'idle' && (
+            <div style={{ marginBottom: 14, fontSize: '0.84rem', color: bridgeStatus === 'ready' ? 'var(--success)' : bridgeStatus === 'warning' ? 'var(--warning)' : 'var(--error)' }}>
+              {bridgeStatus === 'checking' && '正在检测 Bridge 状态...'}
+              {bridgeStatus === 'ready' && `Bridge 已连接 · 命令模式：${bridgeInfo?.mode || 'unknown'} · 命令：${bridgeInfo?.commandPreview || 'unknown'}`}
+              {bridgeStatus === 'warning' && `Bridge 已启动，但未配置 CLI 命令。`}
+              {bridgeStatus === 'error' && bridgeError}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={() => runBridgeHealthCheck({ bridgeUrl: bridgeUrlInput.trim() || defaultBridgeSettings.bridgeUrl }).catch(() => {})}
+            >
+              测试连接
+            </button>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSaveBridge}>
+              保存并开始
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedScene) {
     return (
       <div className="page-transition">
         <div className="page-header">
-          <h2>🏛️ 苏格拉底式学习</h2>
-          <div className="subtitle">通过引导式提问深入理解每句台词 · 选择一句台词开始对话</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div>
+              <h2>🏛️ 苏格拉底式学习</h2>
+              <div className="subtitle">使用 gemini-internal 驱动真实 AI 追问式英语学习</div>
+            </div>
+            <button className="btn btn-sm" onClick={() => setShowBridgeSetup(true)}>⚙️ Bridge 设置</button>
+          </div>
         </div>
+
         <div className="page-body">
           <div className="card" style={{ marginBottom: 20 }}>
-            <div className="card-title">💡 什么是苏格拉底式学习？</div>
-            <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-              <p>苏格拉底式教学法（Socratic Method）是通过提问引导你主动思考的学习方式。与传统的"老师讲、学生听"不同，
-              这里我会不断向你提问，引导你自己发现答案。</p>
-              <p style={{ marginTop: 8 }}>每次对话包含三个阶段：</p>
-              <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
-                <div style={{ flex: 1, padding: 16, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>🎯</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>理解台词</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>表面理解 → 深层含义 → 批判思考</div>
-                </div>
-                <div style={{ flex: 1, padding: 16, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>📚</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>词汇探索</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>探索 → 关联 → 应用</div>
-                </div>
-                <div style={{ flex: 1, padding: 16, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔧</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>语法发现</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>观察 → 假设 → 验证</div>
-                </div>
+            <div className="card-title">🔌 当前连接状态</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              <div>Bridge 地址：`{bridgeSettings.bridgeUrl}`</div>
+              <div>
+                状态：
+                <span style={{ color: bridgeStatus === 'ready' ? 'var(--success)' : bridgeStatus === 'warning' ? 'var(--warning)' : bridgeStatus === 'error' ? 'var(--error)' : 'var(--text-muted)', marginLeft: 6 }}>
+                  {bridgeStatus === 'ready' && '已就绪'}
+                  {bridgeStatus === 'warning' && 'Bridge 已启动，但 CLI 未配置'}
+                  {bridgeStatus === 'error' && '连接失败'}
+                  {bridgeStatus === 'checking' && '检测中'}
+                  {bridgeStatus === 'idle' && '未检测'}
+                </span>
               </div>
+              {bridgeInfo?.commandPreview && <div>命令预览：`{bridgeInfo.commandPreview}`</div>}
+              {bridgeError && <div style={{ color: 'var(--error)', marginTop: 6 }}>{bridgeError}</div>}
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="card-title">💡 gemini-internal 驱动</div>
+            <div style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              苏格拉底对话通过本地 Bridge 调用 <code>gemini-internal -p</code>，前端只负责展示和上下文组织。
+              它会持续把提问拉回到 <strong>句意、关键词、句式、迁移应用</strong> 这条英语主线。
             </div>
           </div>
 
           <div className="card">
-            <div className="card-title">🎬 选择台词开始对话</div>
+            <div className="card-title">🎬 选择台词开启真实 AI 对话</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {allScenes.map(scene => (
+              {allScenes.map((scene) => (
                 <div
                   key={scene.id}
                   onClick={() => startSession(scene)}
@@ -174,35 +313,27 @@ export default function SocraticPage() {
                     padding: '14px 18px',
                     background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
                     border: '1px solid var(--border)', cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'var(--primary)';
-                    e.currentTarget.style.background = 'var(--primary-glow)';
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.borderColor = 'var(--primary)';
+                    event.currentTarget.style.background = 'var(--primary-glow)';
                   }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.background = 'var(--bg-elevated)';
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.borderColor = 'var(--border)';
+                    event.currentTarget.style.background = 'var(--bg-elevated)';
                   }}
                 >
                   <div className="character-avatar" style={{ width: 36, height: 36, fontSize: '0.8rem' }}>
-                    {scene.character.split(' ').map(n => n[0]).join('')}
+                    {scene.character.split(' ').map((name) => name[0]).join('')}
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <div style={{
-                      fontSize: '0.9rem', fontWeight: 500,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                    }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       "{scene.dialogue.slice(0, 70)}..."
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
                       {scene.character} · {scene.episodeTitle}
                     </div>
-                  </div>
-                  <div className="difficulty-dots">
-                    {[1, 2, 3, 4, 5].map(d => (
-                      <div key={d} className={`difficulty-dot ${d <= scene.difficulty ? 'active' : ''}`} />
-                    ))}
                   </div>
                 </div>
               ))}
@@ -213,25 +344,30 @@ export default function SocraticPage() {
     );
   }
 
-  // 对话界面
   return (
     <div className="page-transition">
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <h2>🏛️ 苏格拉底对话</h2>
             <div className="subtitle">
               {selectedScene.character}: "{selectedScene.dialogue.slice(0, 40)}..."
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {session?.phases.map((phase, i) => (
-              <div key={i} style={{
-                padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 600,
-                background: i === currentPhase ? 'var(--primary-glow)' : i < currentPhase ? 'var(--success-bg)' : 'var(--bg-elevated)',
-                color: i === currentPhase ? 'var(--primary)' : i < currentPhase ? 'var(--success)' : 'var(--text-muted)',
-                border: `1px solid ${i === currentPhase ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
-              }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {session?.phases.map((phase, index) => (
+              <div
+                key={phase.type}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  background: index === currentPhase ? 'var(--primary-glow)' : index < currentPhase ? 'var(--success-bg)' : 'var(--bg-elevated)',
+                  color: index === currentPhase ? 'var(--primary)' : index < currentPhase ? 'var(--success)' : 'var(--text-muted)',
+                  border: `1px solid ${index === currentPhase ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
+                }}
+              >
                 {phase.icon} {phase.title}
               </div>
             ))}
@@ -240,25 +376,33 @@ export default function SocraticPage() {
       </div>
 
       <div className="page-body">
+        <div className="card" style={{ marginBottom: 16, padding: 16 }}>
+          <div className="card-title" style={{ marginBottom: 10 }}>📏 英语主线约束</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            {session?.guardrails.map((rule, index) => (
+              <div key={rule}>{index + 1}. {rule}</div>
+            ))}
+          </div>
+        </div>
+
         <div className="socratic-container">
-          <div className="chat-messages" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-            {messages.map((msg, i) => (
-              <div key={i} className={`chat-message ${msg.role}`}>
-                <div className="avatar">
-                  {msg.role === 'system' ? '🏛️' : '👤'}
-                </div>
+          <div className="chat-messages" style={{ height: 'calc(100vh - 380px)', overflowY: 'auto' }}>
+            {messages.map((message, index) => (
+              <div key={index} className={`chat-message ${message.role === 'model' ? 'system' : 'user'}`}>
+                <div className="avatar">{message.role === 'model' ? '🏛️' : '👤'}</div>
                 <div className="bubble">
-                  {msg.content.split('\n').map((line, j) => (
-                    <p key={j} style={{ marginBottom: line ? 6 : 0 }}>{line}</p>
+                  {message.parts[0].text.split('\n').map((line, lineIndex) => (
+                    <p key={lineIndex} style={{ marginBottom: line ? 6 : 0 }}>{line}</p>
                   ))}
                 </div>
               </div>
             ))}
+
             {isThinking && (
               <div className="chat-message system">
                 <div className="avatar">🏛️</div>
                 <div className="bubble" style={{ display: 'flex', gap: 4 }}>
-                  <span className="dot-typing">思考中</span>
+                  <span className="dot-typing">本地模型思考中</span>
                   <span style={{ animation: 'pulse 1s infinite' }}>...</span>
                 </div>
               </div>
@@ -272,27 +416,27 @@ export default function SocraticPage() {
                 ref={inputRef}
                 type="text"
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="输入你的思考和回答... (中英文均可)"
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleSend()}
+                placeholder="先解释句意 / 关键词 / 句式，再尝试给一个英文迁移例句..."
                 disabled={isThinking}
               />
-              <button
-                className="btn btn-primary"
-                onClick={handleSend}
-                disabled={!input.trim() || isThinking}
-              >
+              <button className="btn btn-primary" onClick={handleSend} disabled={!input.trim() || isThinking}>
                 发送
               </button>
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: 20 }}>
-              <button className="btn btn-primary btn-lg" onClick={() => {
-                setSelectedScene(null);
-                setMessages([]);
-                setSession(null);
-              }}>
-                选择新台词继续学习 →
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={() => {
+                  setSelectedScene(null);
+                  setMessages([]);
+                  setSession(null);
+                  setInput('');
+                }}
+              >
+                学习完成！选择新台词 →
               </button>
             </div>
           )}

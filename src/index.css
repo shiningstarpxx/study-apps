@@ -1016,7 +1016,7 @@ input:focus, textarea:focus {
   }
 
   .page-body {
-    padding: 16px;
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
   }
 
   .page-header {

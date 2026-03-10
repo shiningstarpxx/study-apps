@@ -42,7 +42,7 @@ export default function Dashboard({ onNavigate }) {
     <div className="page-transition">
       <div className="page-header">
         <h2>📺 Billions English</h2>
-        <div className="subtitle">跟着《亿万》学地道英语 · 今日已学习 {plan.tasks.reduce((s, t) => s + t.completed, 0)} 项</div>
+        <div className="subtitle">跟着《亿万》学地道英语 · 第一季 12 集课程已载入 · 今日已学习 {plan.tasks.reduce((s, t) => s + t.completed, 0)} 项</div>
       </div>
 
       <div className="page-body">
