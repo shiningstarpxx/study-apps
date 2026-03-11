@@ -236,6 +236,132 @@ export function addSocraticSession(session) {
   return updatedHistory;
 }
 
+// ==================== 错题本系统 (基于记忆曲线) ====================
+
+const WRONG_ANSWERS_KEY = 'billions_english_wrong_answers';
+
+export function getWrongAnswers() {
+  return getItem(WRONG_ANSWERS_KEY) || {};
+}
+
+// 添加错题（提交测验时调用）
+export function addWrongAnswers(wrongItems) {
+  const data = getWrongAnswers();
+  const today = new Date().toISOString().split('T')[0];
+
+  wrongItems.forEach(item => {
+    const key = `${item.type}__${item.questionKey}`;
+    const existing = data[key];
+
+    if (existing) {
+      // 已存在 → 重置 SRS（又错了，说明没掌握）
+      existing.wrongCount += 1;
+      existing.lastWrongDate = today;
+      existing.interval = 1;
+      existing.repetitions = 0;
+      existing.nextReview = today;
+    } else {
+      data[key] = {
+        ...item,
+        wrongCount: 1,
+        firstWrongDate: today,
+        lastWrongDate: today,
+        // SRS 调度字段
+        easeFactor: 2.5,
+        interval: 1,
+        repetitions: 0,
+        nextReview: today,
+        lastReview: null,
+        mastered: false,
+      };
+    }
+  });
+
+  setItem(WRONG_ANSWERS_KEY, data);
+  return data;
+}
+
+// 获取到期的错题（需要复习的）
+export function getDueWrongAnswers() {
+  const data = getWrongAnswers();
+  const today = new Date().toISOString().split('T')[0];
+  return Object.entries(data)
+    .filter(([, item]) => !item.mastered && item.nextReview <= today)
+    .map(([id, item]) => ({ id, ...item }))
+    .sort((a, b) => b.wrongCount - a.wrongCount);
+}
+
+// 更新错题 SRS（复习后调用）
+export function updateWrongAnswerSRS(itemId, quality) {
+  const data = getWrongAnswers();
+  const item = data[itemId];
+  if (!item) return null;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  if (quality >= 4) {
+    // 答对了
+    if (item.repetitions === 0) {
+      item.interval = 1;
+    } else if (item.repetitions === 1) {
+      item.interval = 3;
+    } else if (item.repetitions === 2) {
+      item.interval = 7;
+    } else {
+      item.interval = Math.round(item.interval * item.easeFactor);
+    }
+    item.repetitions += 1;
+
+    // 连续正确 >= 4 次 → 标记为已掌握
+    if (item.repetitions >= 4) {
+      item.mastered = true;
+    }
+  } else {
+    // 又答错了 → 重置
+    item.repetitions = 0;
+    item.interval = 1;
+    item.wrongCount += 1;
+    item.lastWrongDate = today;
+  }
+
+  item.easeFactor = Math.max(1.3,
+    item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  );
+
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + item.interval);
+  item.nextReview = nextDate.toISOString().split('T')[0];
+  item.lastReview = today;
+
+  data[itemId] = item;
+  setItem(WRONG_ANSWERS_KEY, data);
+  return item;
+}
+
+// 错题统计
+export function getWrongAnswerStats() {
+  const data = getWrongAnswers();
+  const entries = Object.values(data);
+  const today = new Date().toISOString().split('T')[0];
+  const due = entries.filter(e => !e.mastered && e.nextReview <= today);
+  const mastered = entries.filter(e => e.mastered);
+  const active = entries.filter(e => !e.mastered);
+
+  // 按题型分组统计
+  const byType = {};
+  active.forEach(e => {
+    byType[e.type] = (byType[e.type] || 0) + 1;
+  });
+
+  return {
+    total: entries.length,
+    active: active.length,
+    mastered: mastered.length,
+    dueCount: due.length,
+    byType,
+  };
+}
+
 // ==================== 设置 ====================
 
 export function getSettings() {

@@ -391,3 +391,56 @@ function getGrade(ratio) {
   if (ratio >= 0.6) return { letter: 'C', label: '及格', emoji: '📚' };
   return { letter: 'D', label: '继续努力', emoji: '💪' };
 }
+
+// 从错题本生成复习测验
+export function generateWrongAnswerQuiz(wrongItems, maxCount = 10) {
+  if (!wrongItems || wrongItems.length === 0) return null;
+
+  const scenes = getAllScenes();
+  const generators = {
+    [QUIZ_TYPES.VOCABULARY_CHOICE]: generateVocabularyChoice,
+    [QUIZ_TYPES.FILL_IN_BLANK]: generateFillInBlank,
+    [QUIZ_TYPES.TRANSLATION]: generateTranslation,
+    [QUIZ_TYPES.SCENE_CONTEXT]: generateSceneContext,
+    [QUIZ_TYPES.WORD_MATCHING]: generateWordMatching,
+    [QUIZ_TYPES.GRAMMAR_CHOICE]: generateGrammarChoice,
+  };
+
+  const selected = wrongItems.slice(0, maxCount);
+  const questions = [];
+
+  for (const item of selected) {
+    const generator = generators[item.type];
+    if (!generator) continue;
+
+    // 优先从错题的原始 sceneId 筛选场景
+    let targetScenes = item.sceneId
+      ? scenes.filter(s => s.id === item.sceneId)
+      : scenes;
+    if (targetScenes.length === 0) targetScenes = scenes;
+
+    try {
+      const question = generator(targetScenes);
+      if (question) {
+        questions.push({
+          ...question,
+          index: questions.length + 1,
+          wrongAnswerId: item.id,
+          isReview: true,
+        });
+      }
+    } catch {
+      // 跳过失败的
+    }
+  }
+
+  if (questions.length === 0) return null;
+
+  return {
+    id: `review_${Date.now()}`,
+    questions,
+    totalPoints: questions.reduce((sum, q) => sum + q.points, 0),
+    createdAt: new Date().toISOString(),
+    isReviewQuiz: true,
+  };
+}
