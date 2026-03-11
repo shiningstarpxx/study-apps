@@ -8,6 +8,7 @@ import SocraticPage from './pages/SocraticPage';
 import ReviewPage from './pages/ReviewPage';
 import VocabularyPage from './pages/VocabularyPage';
 import StatsPage from './pages/StatsPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
 const pagePaths = {
@@ -18,6 +19,7 @@ const pagePaths = {
   socratic: '/socratic',
   vocabulary: '/vocabulary',
   stats: '/stats',
+  settings: '/settings',
 };
 
 function AppShell() {
@@ -54,6 +56,7 @@ function AppShell() {
           <Route path="/socratic" element={<SocraticPage onNavigate={handleNavigate} />} />
           <Route path="/vocabulary" element={<VocabularyPage onNavigate={handleNavigate} />} />
           <Route path="/stats" element={<StatsPage onNavigate={handleNavigate} />} />
+          <Route path="/settings" element={<SettingsPage onNavigate={handleNavigate} />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

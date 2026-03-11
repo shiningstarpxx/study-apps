@@ -9,6 +9,7 @@ const navItems = [
   { id: 'socratic', label: '苏格拉底', icon: '🏛️', section: 'practice' },
   { id: 'vocabulary', label: '词汇本', icon: '📚', section: 'tools' },
   { id: 'stats', label: '学习统计', icon: '📊', section: 'tools' },
+  { id: 'settings', label: '系统设置', icon: '⚙️', section: 'tools' },
 ];
 
 const sections = {

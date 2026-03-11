@@ -223,17 +223,17 @@ export function getSocraticHistory() {
 
 export function addSocraticSession(session) {
   const history = getSocraticHistory();
-  history.push({
+  const newEntry = {
     ...session,
     date: new Date().toISOString(),
     id: Date.now().toString(),
-  });
-  // 只保留最近50条
-  if (history.length > 50) {
-    history.splice(0, history.length - 50);
-  }
-  setItem(STORAGE_KEYS.SOCRATIC_HISTORY, history);
-  return history;
+  };
+  
+  // 如果已经存在相同 sceneId 的记录，可以选择更新或保留多条。这里我们保留最新的。
+  const updatedHistory = [newEntry, ...history.filter(s => s.sceneId !== session.sceneId || session.isPartial)].slice(0, 50);
+  
+  setItem(STORAGE_KEYS.SOCRATIC_HISTORY, updatedHistory);
+  return updatedHistory;
 }
 
 // ==================== 设置 ====================

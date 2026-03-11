@@ -24,13 +24,21 @@ export default function QuizPage() {
   });
 
   const startQuiz = () => {
-    const newQuiz = generateQuiz(quizConfig);
-    setQuiz(newQuiz);
-    setCurrentQ(0);
-    setAnswers({});
-    setShowResult(false);
-    setResult(null);
-    setShowExplanation(false);
+    try {
+      const newQuiz = generateQuiz(quizConfig);
+      if (!newQuiz || !newQuiz.questions || newQuiz.questions.length === 0) {
+        alert('题目生成失败，请调整设置后重试。');
+        return;
+      }
+      setQuiz(newQuiz);
+      setCurrentQ(0);
+      setAnswers({});
+      setShowResult(false);
+      setResult(null);
+      setShowExplanation(false);
+    } catch {
+      alert('测验生成出错，请重试。');
+    }
   };
 
   const handleAnswer = (answer) => {
@@ -352,42 +360,69 @@ export default function QuizPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 8, color: 'var(--text-muted)' }}>单词</div>
-                  {question.pairs.map((pair, i) => (
-                    <div key={i} style={{
-                      padding: '10px 14px', marginBottom: 6,
-                      background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
-                      fontWeight: 600, color: 'var(--primary)'
-                    }}>
-                      {i + 1}. {pair.word}
-                    </div>
-                  ))}
+                  {question.pairs.map((pair, i) => {
+                    const currentAnswers = answers[currentQ] || [];
+                    return (
+                      <div key={i} style={{
+                        padding: '10px 14px', marginBottom: 6,
+                        background: currentAnswers[i] ? 'var(--primary-glow)' : 'var(--bg-elevated)',
+                        borderRadius: 'var(--radius-sm)',
+                        fontWeight: 600, color: 'var(--primary)',
+                        border: currentAnswers[i] ? '1px solid var(--primary)' : '1px solid transparent',
+                        cursor: currentAnswers[i] ? 'pointer' : 'default',
+                      }}
+                        onClick={() => {
+                          if (currentAnswers[i] && !showExplanation) {
+                            // 点击已配对的单词可以取消配对
+                            const updated = [...currentAnswers];
+                            updated[i] = undefined;
+                            handleAnswer(updated);
+                          }
+                        }}
+                      >
+                        {i + 1}. {pair.word}
+                        {currentAnswers[i] && (
+                          <span style={{ float: 'right', fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-secondary)' }}>
+                            → {currentAnswers[i]} ✕
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 8, color: 'var(--text-muted)' }}>含义（点击选择）</div>
-                  {question.shuffledMeanings.map((meaning, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        const current = answers[currentQ] || [];
-                        const updated = [...current];
-                        // 找到第一个未填的位置
-                        const nextEmpty = updated.findIndex((v) => !v);
-                        const pos = nextEmpty === -1 ? updated.length : nextEmpty;
-                        if (pos < question.pairs.length) {
-                          updated[pos] = meaning;
-                          handleAnswer(updated);
-                        }
-                      }}
-                      style={{
-                        padding: '10px 14px', marginBottom: 6,
-                        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer', border: '1px solid var(--border)',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {meaning}
-                    </div>
-                  ))}
+                  {question.shuffledMeanings.map((meaning, i) => {
+                    const currentAnswers = answers[currentQ] || [];
+                    const alreadyUsed = currentAnswers.includes(meaning);
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          if (showExplanation || alreadyUsed) return;
+                          const updated = [...currentAnswers];
+                          // 找到第一个未填的位置
+                          const nextEmpty = updated.findIndex((v, idx) => idx < question.pairs.length && !v);
+                          const pos = nextEmpty === -1 ? updated.length : nextEmpty;
+                          if (pos < question.pairs.length) {
+                            updated[pos] = meaning;
+                            handleAnswer(updated);
+                          }
+                        }}
+                        style={{
+                          padding: '10px 14px', marginBottom: 6,
+                          background: alreadyUsed ? 'var(--bg-dark)' : 'var(--bg-elevated)',
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: alreadyUsed || showExplanation ? 'not-allowed' : 'pointer',
+                          border: '1px solid var(--border)',
+                          transition: 'all 0.2s',
+                          opacity: alreadyUsed ? 0.4 : 1,
+                        }}
+                      >
+                        {meaning}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

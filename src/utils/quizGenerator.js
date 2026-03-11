@@ -17,6 +17,14 @@ export const QUIZ_TYPES = {
 // 生成词汇选择题
 function generateVocabularyChoice(scenes) {
   const scene = scenes[Math.floor(Math.random() * scenes.length)];
+  if (!scene.keywords || scene.keywords.length === 0) {
+    // 防御性：找一个有关键词的场景
+    const fallbackScene = scenes.find(s => s.keywords && s.keywords.length > 0) || scene;
+    if (!fallbackScene.keywords || fallbackScene.keywords.length === 0) {
+      return null; // 无法生成
+    }
+    return generateVocabularyChoice([fallbackScene]);
+  }
   const keyword = scene.keywords[Math.floor(Math.random() * scene.keywords.length)];
 
   // 生成干扰项
@@ -48,6 +56,9 @@ function generateVocabularyChoice(scenes) {
 // 生成填空题
 function generateFillInBlank(scenes) {
   const scene = scenes[Math.floor(Math.random() * scenes.length)];
+  if (!scene.keywords || scene.keywords.length === 0) {
+    return generateVocabularyChoice(scenes);
+  }
   const keyword = scene.keywords[Math.floor(Math.random() * scene.keywords.length)];
   const blankDialogue = scene.dialogue.replace(
     new RegExp(keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
@@ -141,10 +152,16 @@ function generateSceneContext(scenes) {
 
 // 生成词汇配对题
 function generateWordMatching(scenes) {
-  const selectedScenes = scenes.sort(() => Math.random() - 0.5).slice(0, 4);
+  // 使用展开运算符避免修改原数组
+  const selectedScenes = [...scenes].sort(() => Math.random() - 0.5).slice(0, 4);
   const pairs = selectedScenes.flatMap(s =>
-    s.keywords.slice(0, 1).map(k => ({ word: k.word, meaning: k.meaning }))
+    (s.keywords || []).slice(0, 1).map(k => ({ word: k.word, meaning: k.meaning }))
   ).slice(0, 4);
+
+  if (pairs.length < 2) {
+    // 配对题至少需要2对，不够则回退为词汇选择题
+    return generateVocabularyChoice(scenes);
+  }
 
   return {
     type: QUIZ_TYPES.WORD_MATCHING,
@@ -161,19 +178,36 @@ function generateWordMatching(scenes) {
 function generateGrammarChoice(scenes) {
   const scene = scenes[Math.floor(Math.random() * scenes.length)];
 
-  if (!scene.grammar) {
+  if (!scene.grammar || !scene.grammar.point || !scene.grammar.example) {
     return generateVocabularyChoice(scenes);
   }
 
   const grammarPoint = scene.grammar.point;
   const correctExample = scene.grammar.example;
 
-  // 生成错误选项
-  const wrongOptions = [
-    correctExample.replace(/to /g, 'for '),
-    correctExample.replace(/the /g, 'a '),
-    correctExample.replace(/is /g, 'are '),
-  ].filter(o => o !== correctExample).slice(0, 2);
+  // 生成错误选项，使用更多变换以确保至少产生2个不同的干扰项
+  const transforms = [
+    s => s.replace(/to /g, 'for '),
+    s => s.replace(/the /g, 'a '),
+    s => s.replace(/is /g, 'are '),
+    s => s.replace(/has /g, 'have '),
+    s => s.replace(/was /g, 'were '),
+    s => s.replace(/can /g, 'could '),
+  ];
+
+  const wrongOptions = [];
+  for (const transform of transforms) {
+    const wrong = transform(correctExample);
+    if (wrong !== correctExample && !wrongOptions.includes(wrong)) {
+      wrongOptions.push(wrong);
+    }
+    if (wrongOptions.length >= 2) break;
+  }
+
+  // 如果仍然没有足够的干扰项，回退为词汇选择题
+  if (wrongOptions.length < 2) {
+    return generateVocabularyChoice(scenes);
+  }
 
   const options = [correctExample, ...wrongOptions].sort(() => Math.random() - 0.5);
 
@@ -232,8 +266,28 @@ export function generateQuiz(options = {}) {
     const type = activeTypes[i % activeTypes.length];
     const generator = generators[type];
     if (generator) {
-      questions.push({ ...generator(scenes), index: i + 1 });
+      try {
+        const question = generator(scenes);
+        if (question) {
+          questions.push({ ...question, index: i + 1 });
+        }
+      } catch {
+        // 单题生成失败，跳过该题，尝试用词汇选择题替补
+        try {
+          const fallback = generateVocabularyChoice(scenes);
+          if (fallback) {
+            questions.push({ ...fallback, index: i + 1 });
+          }
+        } catch {
+          // 替补也失败，跳过
+        }
+      }
     }
+  }
+
+  // 如果没有成功生成任何题目，返回 null
+  if (questions.length === 0) {
+    return null;
   }
 
   return {

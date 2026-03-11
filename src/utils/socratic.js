@@ -242,6 +242,23 @@ function modifySentence(dialogue) {
     .slice(0, 42);
 }
 
+export function decideSocraticPhaseAction(phase, quality, turnCount) {
+  const qualityThreshold = phase?.qualityThreshold ?? 4;
+  const idealTurns = phase?.idealTurns ?? 2;
+  const maxTurns = phase?.maxTurns ?? 3;
+  const reachedGoal = quality >= qualityThreshold;
+  const shouldAdvance = turnCount >= maxTurns || (reachedGoal && turnCount >= idealTurns);
+
+  return {
+    reachedGoal,
+    shouldAdvance,
+    qualityThreshold,
+    idealTurns,
+    maxTurns,
+    reason: turnCount >= maxTurns ? 'turn_limit' : reachedGoal ? 'goal_reached' : 'continue',
+  };
+}
+
 export function createSocraticSession(scene) {
   return {
     sceneId: scene.id,
@@ -260,6 +277,10 @@ export function createSocraticSession(scene) {
         title: '理解台词',
         titleEn: 'Meaning First',
         icon: '🎯',
+        goal: '先说清句意，再指出语气线索，最后给一个可迁移使用场景。',
+        idealTurns: 2,
+        maxTurns: 3,
+        qualityThreshold: 4,
       },
       {
         type: 'vocabulary',
@@ -267,6 +288,10 @@ export function createSocraticSession(scene) {
         title: '词汇迁移',
         titleEn: 'Word in Context',
         icon: '📚',
+        goal: '解释关键词在这句里的意思，并用它造一个新的实用英文句子。',
+        idealTurns: 2,
+        maxTurns: 3,
+        qualityThreshold: 4,
       },
       {
         type: 'grammar',
@@ -274,6 +299,10 @@ export function createSocraticSession(scene) {
         title: '句式应用',
         titleEn: 'Pattern in Use',
         icon: '🔧',
+        goal: '指出句式模式、说明它的作用，再自己用同一结构表达一次。',
+        idealTurns: 2,
+        maxTurns: 3,
+        qualityThreshold: 4,
       },
     ],
   };
