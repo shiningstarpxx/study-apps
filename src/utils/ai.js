@@ -1,3 +1,4 @@
+import { getJSONItem, setJSONItem } from '../shared/lib/storage/localStorageAdapter';
 import { STORAGE_KEYS } from '../shared/lib/storage/storageKeys';
 
 const DEFAULT_BRIDGE_SETTINGS = {
@@ -9,18 +10,15 @@ function normalizeBridgeUrl(bridgeUrl) {
 }
 
 export function getBridgeSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS);
-    if (!raw) return DEFAULT_BRIDGE_SETTINGS;
+  const parsed = {
+    ...DEFAULT_BRIDGE_SETTINGS,
+    ...getJSONItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS, DEFAULT_BRIDGE_SETTINGS),
+  };
 
-    const parsed = { ...DEFAULT_BRIDGE_SETTINGS, ...JSON.parse(raw) };
-    return {
-      ...parsed,
-      bridgeUrl: normalizeBridgeUrl(parsed.bridgeUrl),
-    };
-  } catch {
-    return DEFAULT_BRIDGE_SETTINGS;
-  }
+  return {
+    ...parsed,
+    bridgeUrl: normalizeBridgeUrl(parsed.bridgeUrl),
+  };
 }
 
 export function saveBridgeSettings(settings) {
@@ -30,7 +28,7 @@ export function saveBridgeSettings(settings) {
     ...settings,
     bridgeUrl: normalizeBridgeUrl(settings?.bridgeUrl ?? current.bridgeUrl),
   };
-  localStorage.setItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS, JSON.stringify(next));
+  setJSONItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS, next);
   return next;
 }
 

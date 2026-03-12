@@ -1,27 +1,13 @@
 // 本地存储管理 - 学习进度、间隔重复数据、考试记录等
 
 import { getOffsetDateKey, getTodayDateKey } from '../shared/lib/date/dateUtils';
+import { getJSONItem, setJSONItem } from '../shared/lib/storage/localStorageAdapter';
 import { STORAGE_KEYS } from '../shared/lib/storage/storageKeys';
-
-// ==================== 通用存储操作 ====================
-
-function getItem(key) {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
-}
-
-function setItem(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
 
 // ==================== 学习进度 ====================
 
 export function getProgress() {
-  return getItem(STORAGE_KEYS.PROGRESS) || {
+  return getJSONItem(STORAGE_KEYS.PROGRESS) || {
     completedScenes: [],      // 已完成的台词ID列表
     currentEpisode: 'S01E01', // 当前学习的集
     currentSceneIndex: 0,     // 当前台词索引
@@ -36,7 +22,7 @@ export function getProgress() {
 export function updateProgress(updates) {
   const current = getProgress();
   const updated = { ...current, ...updates };
-  setItem(STORAGE_KEYS.PROGRESS, updated);
+  setJSONItem(STORAGE_KEYS.PROGRESS, updated);
   return updated;
 }
 
@@ -49,7 +35,7 @@ export function markSceneCompleted(sceneId, learnedWordCount = 3) {
     progress.level = Math.floor(progress.xp / 100) + 1;
   }
   progress.lastStudyDate = getTodayDateKey();
-  setItem(STORAGE_KEYS.PROGRESS, progress);
+  setJSONItem(STORAGE_KEYS.PROGRESS, progress);
   return progress;
 }
 
@@ -57,7 +43,7 @@ export function markSceneCompleted(sceneId, learnedWordCount = 3) {
 
 // 基于SM-2算法的简化版本
 export function getSRSData() {
-  return getItem(STORAGE_KEYS.SRS) || {};
+  return getJSONItem(STORAGE_KEYS.SRS) || {};
 }
 
 export function updateSRS(itemId, quality) {
@@ -93,7 +79,7 @@ export function updateSRS(itemId, quality) {
   item.lastReview = getTodayDateKey();
 
   srsData[itemId] = item;
-  setItem(STORAGE_KEYS.SRS, srsData);
+  setJSONItem(STORAGE_KEYS.SRS, srsData);
   return item;
 }
 
@@ -108,7 +94,7 @@ export function getDueReviews() {
 // ==================== 考试记录 ====================
 
 export function getQuizHistory() {
-  return getItem(STORAGE_KEYS.QUIZ_HISTORY) || [];
+  return getJSONItem(STORAGE_KEYS.QUIZ_HISTORY) || [];
 }
 
 export function addQuizResult(result) {
@@ -118,14 +104,14 @@ export function addQuizResult(result) {
     date: new Date().toISOString(),
     id: Date.now().toString(),
   });
-  setItem(STORAGE_KEYS.QUIZ_HISTORY, history);
+  setJSONItem(STORAGE_KEYS.QUIZ_HISTORY, history);
   return history;
 }
 
 // ==================== 每日计划 ====================
 
 export function getDailyPlan() {
-  const plan = getItem(STORAGE_KEYS.DAILY_PLAN);
+  const plan = getJSONItem(STORAGE_KEYS.DAILY_PLAN);
   const today = getTodayDateKey();
   if (plan && plan.date === today) {
     return plan;
@@ -147,7 +133,7 @@ export function createDailyPlan() {
     ],
     totalXP: 0,
   };
-  setItem(STORAGE_KEYS.DAILY_PLAN, plan);
+  setJSONItem(STORAGE_KEYS.DAILY_PLAN, plan);
   return plan;
 }
 
@@ -158,20 +144,19 @@ export function updateDailyTask(taskId, increment = 1) {
     task.completed = Math.min(task.completed + increment, task.target);
   }
   plan.totalXP = plan.tasks.reduce((sum, t) => sum + (t.completed * 10), 0);
-  setItem(STORAGE_KEYS.DAILY_PLAN, plan);
+  setJSONItem(STORAGE_KEYS.DAILY_PLAN, plan);
   return plan;
 }
 
 // ==================== 学习连续天数 ====================
 
 export function getStreak() {
-  const streak = getItem(STORAGE_KEYS.STREAK) || {
+  return getJSONItem(STORAGE_KEYS.STREAK) || {
     current: 0,
     longest: 0,
     lastDate: null,
-    history: [] // 最近30天的学习记录
+    history: [], // 最近30天的学习记录
   };
-  return streak;
 }
 
 export function updateStreak() {
@@ -200,14 +185,14 @@ export function updateStreak() {
     }
   }
 
-  setItem(STORAGE_KEYS.STREAK, streak);
+  setJSONItem(STORAGE_KEYS.STREAK, streak);
   return streak;
 }
 
 // ==================== 苏格拉底对话记录 ====================
 
 export function getSocraticHistory() {
-  return getItem(STORAGE_KEYS.SOCRATIC_HISTORY) || [];
+  return getJSONItem(STORAGE_KEYS.SOCRATIC_HISTORY) || [];
 }
 
 export function addSocraticSession(session) {
@@ -221,14 +206,14 @@ export function addSocraticSession(session) {
   // 如果已经存在相同 sceneId 的记录，可以选择更新或保留多条。这里我们保留最新的。
   const updatedHistory = [newEntry, ...history.filter(s => s.sceneId !== session.sceneId || session.isPartial)].slice(0, 50);
 
-  setItem(STORAGE_KEYS.SOCRATIC_HISTORY, updatedHistory);
+  setJSONItem(STORAGE_KEYS.SOCRATIC_HISTORY, updatedHistory);
   return updatedHistory;
 }
 
 // ==================== 错题本系统 (基于记忆曲线) ====================
 
 export function getWrongAnswers() {
-  return getItem(STORAGE_KEYS.WRONG_ANSWERS) || {};
+  return getJSONItem(STORAGE_KEYS.WRONG_ANSWERS) || {};
 }
 
 // 添加错题（提交测验时调用）
@@ -264,7 +249,7 @@ export function addWrongAnswers(wrongItems) {
     }
   });
 
-  setItem(STORAGE_KEYS.WRONG_ANSWERS, data);
+  setJSONItem(STORAGE_KEYS.WRONG_ANSWERS, data);
   return data;
 }
 
@@ -319,7 +304,7 @@ export function updateWrongAnswerSRS(itemId, quality) {
   item.lastReview = today;
 
   data[itemId] = item;
-  setItem(STORAGE_KEYS.WRONG_ANSWERS, data);
+  setJSONItem(STORAGE_KEYS.WRONG_ANSWERS, data);
   return item;
 }
 
@@ -350,7 +335,7 @@ export function getWrongAnswerStats() {
 // ==================== 设置 ====================
 
 export function getSettings() {
-  return getItem(STORAGE_KEYS.SETTINGS) || {
+  return getJSONItem(STORAGE_KEYS.SETTINGS) || {
     dailyGoal: 15, // 每日目标（分钟）
     showTranslation: true,
     autoPlayAudio: false,
@@ -363,7 +348,7 @@ export function getSettings() {
 export function updateSettings(updates) {
   const current = getSettings();
   const updated = { ...current, ...updates };
-  setItem(STORAGE_KEYS.SETTINGS, updated);
+  setJSONItem(STORAGE_KEYS.SETTINGS, updated);
   return updated;
 }
 
