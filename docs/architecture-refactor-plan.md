@@ -1,5 +1,10 @@
 # Billions English 架构拆分与前后端分离准备方案
 
+> **关联文档**
+> 1. [`design-evolution-review.md`](./design-evolution-review.md) — 项目历史回顾与问题总账（建议先读，建立上下文）
+> 2. 本文 — 全面技术方案（架构分层 + Go 后端 + PostgreSQL 表设计 + 迁移路线）
+> 3. [`single-node-deployment.md`](./single-node-deployment.md) — 当前阶段的单机部署与运维
+
 ## 一、文档目标
 
 这份方案不是只讨论“代码怎么整理”，而是要同时解决两件事：
@@ -951,6 +956,7 @@ PostgreSQL 会更从容。
 | `title_cn` | `varchar(128)` | NOT NULL | 中文标题 |
 | `content_status` | `varchar(20)` | NOT NULL | `detailed` / `expanded` |
 | `teaching_goal` | `text` |  | |
+| `learning_focus` | `jsonb` |  | 学习重点数组，如 `["压力表达", "交易判断"]` |
 | `metadata` | `jsonb` |  | |
 | `published_at` | `timestamptz` |  | |
 | `created_at` | `timestamptz` | NOT NULL | |
@@ -975,7 +981,10 @@ PostgreSQL 会更从容。
 | `dialogue_en` | `text` | NOT NULL | 英文台词 |
 | `dialogue_cn` | `text` | NOT NULL | 中文翻译 |
 | `difficulty` | `smallint` | NOT NULL | 1-5 |
+| `source_type` | `varchar(20)` | NOT NULL | `original` / `inspired` / `adapted` |
 | `audio_asset_id` | `uuid` | NULLABLE | 未来关联音频 |
+| `audio_start` | `numeric(8,3)` | NULLABLE | 音频起始时间戳（秒） |
+| `audio_end` | `numeric(8,3)` | NULLABLE | 音频结束时间戳（秒） |
 | `content_version` | `int` | NOT NULL | 内容版本 |
 | `metadata` | `jsonb` |  | 预留扩展 |
 | `published_at` | `timestamptz` |  | |
@@ -1125,9 +1134,9 @@ PostgreSQL 会更从容。
 | `last_study_on` | `date` |  | |
 | `updated_at` | `timestamptz` | NOT NULL | |
 
-如果未来需要完整日历热力图，还可追加：
+如果未来需要完整日历热力图，还可追加（推荐作为核心表，因为 Dashboard 日历热力图已在消费 streak.history）：
 
-- `user_study_activity_days(user_id, activity_date, learned_minutes, activity_score, primary key(user_id, activity_date))`
+- `user_study_activity_days(user_id uuid, activity_date date, learned_minutes int NOT NULL DEFAULT 0, activity_score smallint NOT NULL DEFAULT 0, PRIMARY KEY(user_id, activity_date))`
 
 #### 16. `user_keyword_srs`
 
@@ -1304,6 +1313,8 @@ PostgreSQL 会更从容。
 | `current_phase` | `varchar(32)` |  | |
 | `current_stage` | `varchar(32)` |  | |
 | `phase_turn_count` | `int` | NOT NULL | |
+| `phase_config_json` | `jsonb` |  | 创建时的 phase 配置快照 |
+| `guardrails_json` | `jsonb` |  | 本次 session 使用的 guardrails |
 | `session_summary_json` | `jsonb` |  | 学习收获摘要 |
 | `started_at` | `timestamptz` | NOT NULL | |
 | `completed_at` | `timestamptz` |  | |
@@ -1483,6 +1494,7 @@ PostgreSQL 会更从容。
 
 目标：不改变现有功能，只抽接口。
 
+- 统一 localStorage key 注册表：将 `WRONG_ANSWERS_KEY` 并入 `STORAGE_KEYS`，将 `AI_BRIDGE_STORAGE_KEY` 从 `ai.js` 迁入
 - 建立 `shared/lib/date/dateUtils.js`
 - 建立 `shared/lib/storage/localStorageAdapter.js`
 - 把 `toISOString().split('T')[0]` 收敛成统一日期函数
@@ -1548,11 +1560,12 @@ PostgreSQL 会更从容。
 
 ### 11.1 第一批一定要做
 
-1. 抽 `dateUtils`
-2. 抽 `localStorageAdapter`
-3. 拆 `storage.js`
-4. 建 repository 接口
-5. 拆 `QuizPage.jsx`
+1. 统一 localStorage key 注册表（含 `WRONG_ANSWERS_KEY` 和 `AI_BRIDGE_SETTINGS`）
+2. 抽 `dateUtils`
+3. 抽 `localStorageAdapter`
+4. 拆 `storage.js`
+5. 建 repository 接口
+6. 拆 `QuizPage.jsx`
 
 ### 11.2 第二批紧接着做
 
@@ -1596,7 +1609,93 @@ PostgreSQL 会更从容。
 
 ---
 
-## 十三、推荐结论
+## 十三、方案审查与补充修正（2026-03-12）
+
+对方案进行了一轮与实际代码的交叉审查，发现以下需要修正和补充的问题。
+
+### 13.1 表设计中遗漏的实际数据字段
+
+以下字段在当前代码中已经存在，但方案表设计中缺失或不够精确：
+
+| 表 | 遗漏字段 | 实际来源 | 建议处理 |
+|---|---|---|---|
+| `scenes` | `source_type` | `seasonOneExpansion.js` 所有 scene 都有 `sourceType: 'inspired'` | 增加 `source_type varchar(20)` 显式列（`original` / `inspired` / `adapted`），对内容版权管理至关重要 |
+| `scenes` | `audio_start` / `audio_end` | `episodes.js` 中 `S01E01-001` 已有 `audioStart: 0, audioEnd: 4.5` | 增加 `audio_start numeric(8,3)` 和 `audio_end numeric(8,3)` nullable 列，为音频功能预留 |
+| `episodes` | `learning_focus` | 所有 episode 都有 `learningFocus: ['压力表达', '交易判断']` 数组 | 增加 `learning_focus jsonb` 或 `text[]` 列 |
+| `quiz_questions` | `direction` | 翻译题有 `direction: 'en2cn' / 'cn2en'` | 放入 `explanation_json` 并约定 schema，或增加 `direction varchar(8)` |
+| `quiz_questions` | 评分关键词 | 翻译题有 `keywords` 列表用于规则评分 | 放入 `explanation_json.scoring_keywords` |
+| `socratic_sessions` | `phase_config_json` | `createSocraticSession()` 返回完整 phases 配置（3 phase，每个有 type/stages/idealTurns/maxTurns/qualityThreshold） | 增加 `phase_config_json jsonb`，保存创建时的 phase 配置快照 |
+| `socratic_sessions` | `guardrails_json` | `createSocraticSession()` 返回 `guardrails` 数组（4 条规则） | 增加 `guardrails_json jsonb`，支持不同用户/难度等级使用不同会话规则 |
+
+### 13.2 localStorage key 注册不完整
+
+当前系统共有 **9 个** localStorage key，但 `STORAGE_KEYS` 只注册了 7 个：
+
+| Key | 当前位置 | 是否在 STORAGE_KEYS 中 |
+|---|---|---|
+| `billions_english_progress` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_srs` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_quiz_history` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_daily_plan` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_streak` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_socratic_history` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_study_mode` | `storage.js` STORAGE_KEYS | ✅ |
+| `billions_english_wrong_answers` | `storage.js` 独立常量 | ❌ 游离在 STORAGE_KEYS 体系外 |
+| `AI_BRIDGE_SETTINGS` | `ai.js` 独立常量 | ❌ 完全绕过 storage.js |
+
+**修正**：Phase 0 的落地清单中增加"统一 key 注册"任务：
+- 将 `WRONG_ANSWERS_KEY` 并入 `STORAGE_KEYS`
+- 将 `AI_BRIDGE_STORAGE_KEY` 从 `ai.js` 迁入统一管理
+- 建立完整的 key → 领域 → repository 映射表
+
+### 13.3 grammar 数据迁移需要解析规则
+
+实际数据中 `grammar.point` 字段同时包含标题和解释（用 ` - ` 连接）：
+
+```
+"What's the point of + doing something - 用于质问做某事的意义"
+```
+
+但方案 `scene_grammar_points` 表拆成了 `grammar_title` 和 `grammar_explanation`。数据迁移时需要显式的解析规则来拆分这两个字段。
+
+### 13.4 SENTENCE_ORDER 题型状态需要清理
+
+`QUIZ_TYPES` 中定义了 `SENTENCE_ORDER: 'sentence_order'`，但 `generators` 对象中完全没有对应的生成函数。建议在 Phase 2 拆 QuizPage 时明确：**要么补全生成逻辑，要么从 QUIZ_TYPES 中移除**，避免影响题型覆盖率统计和错题本分类。
+
+### 13.5 daily_plan task ID 与 type 不一致
+
+实际代码中 `createDailyPlan()` 使用 `id: 'new_scenes'` 但 `task_type` 用 `'learn'`。方案表的 `unique(daily_plan_id, task_type)` 约束是正确的，但前端代码按 `id` 而非 `type` 匹配任务。迁移时需要处理 `id='new_scenes'` → `task_type='learn'` 的映射。
+
+### 13.6 streak history 应该是核心表而非可选表
+
+当前 `getStreak()` 返回的 `history` 是最近 30 天日期数组，Dashboard 日历热力图已经在消费这个数据。方案中 `user_study_activity_days` 标注为"可选"，但实际上应该列为核心表：
+
+```
+user_study_activity_days(
+  user_id uuid,
+  activity_date date,
+  learned_minutes int NOT NULL DEFAULT 0,
+  activity_score smallint NOT NULL DEFAULT 0,
+  PRIMARY KEY(user_id, activity_date)
+)
+```
+
+### 13.7 运维补充
+
+- `manage.sh` 日志全部 `>>` 追加，没有轮转机制。建议在 `single-node-deployment.md` 中补充 `logrotate` 配置建议。
+- 方案应明确：Go 后端上线后，`/api/*` → Go API、`/api/ai/*` → AI Bridge 的路由切换策略需要在统一配置中管理，避免 `vite.config.js` 和 `static-server.js` 中多处 hardcode。
+
+### 13.8 文档衔接建议
+
+三份文档的阅读顺序建议：
+
+1. `design-evolution-review.md` → 历史回顾，建立上下文
+2. `architecture-refactor-plan.md` → 全面技术方案
+3. `single-node-deployment.md` → 当前阶段的部署落地
+
+---
+
+## 十四、修正后的推荐结论
 
 如果只选一个方向开始，**优先拆 `storage.js` + `QuizPage.jsx`**。
 
@@ -1606,6 +1705,8 @@ PostgreSQL 会更从容。
 - 错题本、统计、推荐、后端同步都会经过这两层
 - 一旦这两层拆开，后续 `SocraticPage.jsx` 和 `LearnPage.jsx` 的拆分就会顺很多
 
-也就是说，最推荐的第一阶段主线是：
+但在动手之前，建议先完成 Phase 0 中新增的 **key 注册统一** 任务，否则拆 `storage.js` 时会遗漏 `WRONG_ANSWERS_KEY` 和 `AI_BRIDGE_SETTINGS`。
 
-**存储抽象化 → Quiz 模块化 → Socratic 状态机化 → remote adapter 预接入**
+也就是说，修正后的第一阶段主线是：
+
+**key 注册统一 → 存储抽象化 → Quiz 模块化 → Socratic 状态机化 → remote adapter 预接入 → Go API + PostgreSQL 接管真实状态**
