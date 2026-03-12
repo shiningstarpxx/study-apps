@@ -1,27 +1,42 @@
 const AI_BRIDGE_STORAGE_KEY = 'AI_BRIDGE_SETTINGS';
 
 const DEFAULT_BRIDGE_SETTINGS = {
-  bridgeUrl: 'http://127.0.0.1:8787',
+  bridgeUrl: '/api/ai',
 };
+
+function normalizeBridgeUrl(bridgeUrl) {
+  return (bridgeUrl || '').trim() || DEFAULT_BRIDGE_SETTINGS.bridgeUrl;
+}
 
 export function getBridgeSettings() {
   try {
     const raw = localStorage.getItem(AI_BRIDGE_STORAGE_KEY);
     if (!raw) return DEFAULT_BRIDGE_SETTINGS;
-    return { ...DEFAULT_BRIDGE_SETTINGS, ...JSON.parse(raw) };
+
+    const parsed = { ...DEFAULT_BRIDGE_SETTINGS, ...JSON.parse(raw) };
+    return {
+      ...parsed,
+      bridgeUrl: normalizeBridgeUrl(parsed.bridgeUrl),
+    };
   } catch {
     return DEFAULT_BRIDGE_SETTINGS;
   }
 }
 
 export function saveBridgeSettings(settings) {
-  const next = { ...getBridgeSettings(), ...settings };
+  const current = getBridgeSettings();
+  const next = {
+    ...current,
+    ...settings,
+    bridgeUrl: normalizeBridgeUrl(settings?.bridgeUrl ?? current.bridgeUrl),
+  };
   localStorage.setItem(AI_BRIDGE_STORAGE_KEY, JSON.stringify(next));
   return next;
 }
 
 export async function checkBridgeHealth(settings = getBridgeSettings()) {
-  const response = await fetch(`${settings.bridgeUrl.replace(/\/$/, '')}/health`);
+  const bridgeUrl = normalizeBridgeUrl(settings.bridgeUrl);
+  const response = await fetch(`${bridgeUrl.replace(/\/$/, '')}/health`);
   if (!response.ok) {
     throw new Error('BRIDGE_HEALTHCHECK_FAILED');
   }
@@ -29,7 +44,8 @@ export async function checkBridgeHealth(settings = getBridgeSettings()) {
 }
 
 export async function chatWithAI(messages, systemInstruction, settings = getBridgeSettings()) {
-  const response = await fetch(`${settings.bridgeUrl.replace(/\/$/, '')}/chat`, {
+  const bridgeUrl = normalizeBridgeUrl(settings.bridgeUrl);
+  const response = await fetch(`${bridgeUrl.replace(/\/$/, '')}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -79,8 +79,8 @@ export default function SettingsPage() {
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="card-title">AI Bridge 配置</div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.6 }}>
-            苏格拉底对话依赖本地启动的 AI Bridge 以连接大模型（如 gemini-internal）。
-            请确保你已在终端运行 <code>npm run ai:bridge</code>。
+            苏格拉底对话依赖 AI Bridge 连接大模型（如 gemini-internal）。
+            开发环境下默认通过 <code>/api/ai</code> 代理到本地 Bridge；单机部署时也建议保留这个同源地址。
           </p>
           
           <div style={{ marginBottom: 16 }}>
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                 type="text"
                 value={bridgeUrl}
                 onChange={(e) => setBridgeUrl(e.target.value)}
-                placeholder="http://127.0.0.1:8787"
+                placeholder="/api/ai"
                 style={{ flex: 1, minWidth: '200px' }}
               />
               <button className="btn btn-secondary" onClick={handleTestBridge}>
