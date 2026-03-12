@@ -1,5 +1,6 @@
-import { getProgress, getDailyPlan, getStreak, getStatistics, updateStreak } from '../utils/storage';
 import { episodes, getAllScenes } from '../data/episodes';
+import { toDateKey } from '../shared/lib/date/dateUtils';
+import { getProgress, getDailyPlan, getStreak, getStatistics, updateStreak } from '../utils/storage';
 
 // 每次渲染时更新连续学习记录
 updateStreak();
@@ -21,7 +22,7 @@ export default function Dashboard({ onNavigate }) {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = toDateKey(d);
       days.push({
         date: dateStr,
         day: d.getDate(),

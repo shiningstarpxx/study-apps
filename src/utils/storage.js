@@ -1,14 +1,7 @@
 // 本地存储管理 - 学习进度、间隔重复数据、考试记录等
 
-const STORAGE_KEYS = {
-  PROGRESS: 'billions_english_progress',
-  SRS: 'billions_english_srs',
-  QUIZ_HISTORY: 'billions_english_quiz_history',
-  DAILY_PLAN: 'billions_english_daily_plan',
-  SETTINGS: 'billions_english_settings',
-  STREAK: 'billions_english_streak',
-  SOCRATIC_HISTORY: 'billions_english_socratic',
-};
+import { getOffsetDateKey, getTodayDateKey } from '../shared/lib/date/dateUtils';
+import { STORAGE_KEYS } from '../shared/lib/storage/storageKeys';
 
 // ==================== 通用存储操作 ====================
 
@@ -55,7 +48,7 @@ export function markSceneCompleted(sceneId, learnedWordCount = 3) {
     progress.wordsLearned += learnedWordCount;
     progress.level = Math.floor(progress.xp / 100) + 1;
   }
-  progress.lastStudyDate = new Date().toISOString().split('T')[0];
+  progress.lastStudyDate = getTodayDateKey();
   setItem(STORAGE_KEYS.PROGRESS, progress);
   return progress;
 }
@@ -74,7 +67,7 @@ export function updateSRS(itemId, quality) {
     easeFactor: 2.5,
     interval: 1,
     repetitions: 0,
-    nextReview: new Date().toISOString().split('T')[0],
+    nextReview: getTodayDateKey(),
     lastReview: null,
   };
 
@@ -96,10 +89,8 @@ export function updateSRS(itemId, quality) {
     item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
   );
 
-  const nextDate = new Date();
-  nextDate.setDate(nextDate.getDate() + item.interval);
-  item.nextReview = nextDate.toISOString().split('T')[0];
-  item.lastReview = new Date().toISOString().split('T')[0];
+  item.nextReview = getOffsetDateKey(item.interval);
+  item.lastReview = getTodayDateKey();
 
   srsData[itemId] = item;
   setItem(STORAGE_KEYS.SRS, srsData);
@@ -108,7 +99,7 @@ export function updateSRS(itemId, quality) {
 
 export function getDueReviews() {
   const srsData = getSRSData();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
   return Object.entries(srsData)
     .filter(([, item]) => item.nextReview <= today)
     .map(([id, item]) => ({ id, ...item }));
@@ -135,7 +126,7 @@ export function addQuizResult(result) {
 
 export function getDailyPlan() {
   const plan = getItem(STORAGE_KEYS.DAILY_PLAN);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
   if (plan && plan.date === today) {
     return plan;
   }
@@ -144,7 +135,7 @@ export function getDailyPlan() {
 }
 
 export function createDailyPlan() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
   const dueReviews = getDueReviews();
   const plan = {
     date: today,
@@ -185,13 +176,11 @@ export function getStreak() {
 
 export function updateStreak() {
   const streak = getStreak();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
 
   if (streak.lastDate === today) return streak; // 今天已更新
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = getOffsetDateKey(-1);
 
   if (streak.lastDate === yesterdayStr) {
     streak.current += 1;
@@ -228,10 +217,10 @@ export function addSocraticSession(session) {
     date: new Date().toISOString(),
     id: Date.now().toString(),
   };
-  
+
   // 如果已经存在相同 sceneId 的记录，可以选择更新或保留多条。这里我们保留最新的。
   const updatedHistory = [newEntry, ...history.filter(s => s.sceneId !== session.sceneId || session.isPartial)].slice(0, 50);
-  
+
   setItem(STORAGE_KEYS.SOCRATIC_HISTORY, updatedHistory);
   return updatedHistory;
 }
@@ -245,7 +234,7 @@ export function getWrongAnswers() {
 // 添加错题（提交测验时调用）
 export function addWrongAnswers(wrongItems) {
   const data = getWrongAnswers();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
 
   wrongItems.forEach(item => {
     const key = `${item.type}__${item.questionKey}`;
@@ -282,7 +271,7 @@ export function addWrongAnswers(wrongItems) {
 // 获取到期的错题（需要复习的）
 export function getDueWrongAnswers() {
   const data = getWrongAnswers();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
   return Object.entries(data)
     .filter(([, item]) => !item.mastered && item.nextReview <= today)
     .map(([id, item]) => ({ id, ...item }))
@@ -295,7 +284,7 @@ export function updateWrongAnswerSRS(itemId, quality) {
   const item = data[itemId];
   if (!item) return null;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
 
   if (quality >= 4) {
     // 答对了
@@ -326,9 +315,7 @@ export function updateWrongAnswerSRS(itemId, quality) {
     item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
   );
 
-  const nextDate = new Date();
-  nextDate.setDate(nextDate.getDate() + item.interval);
-  item.nextReview = nextDate.toISOString().split('T')[0];
+  item.nextReview = getOffsetDateKey(item.interval);
   item.lastReview = today;
 
   data[itemId] = item;
@@ -340,7 +327,7 @@ export function updateWrongAnswerSRS(itemId, quality) {
 export function getWrongAnswerStats() {
   const data = getWrongAnswers();
   const entries = Object.values(data);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateKey();
   const due = entries.filter(e => !e.mastered && e.nextReview <= today);
   const mastered = entries.filter(e => e.mastered);
   const active = entries.filter(e => !e.mastered);
