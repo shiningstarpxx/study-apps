@@ -1,7 +1,7 @@
 // Billions (亿万) - 台词学习数据库
 // 每条台词包含: 原文、中文翻译、场景描述、关键词汇、难度等级、语法点
 
-import { expandedSeasonOneEpisodes } from './seasonOneExpansion';
+import { expandedSeasonOneEpisodes } from './seasonOneExpansion.js';
 
 export const episodes = [
   {

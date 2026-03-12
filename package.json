@@ -10,6 +10,7 @@
     "build": "vite build",
     "build:app": "vite build",
     "lint": "eslint .",
+    "content:audit": "node ops/content/audit-content.mjs",
     "preview": "vite preview",
     "serve:static": "node server/static-server.js",
     "ops:single-node": "bash ops/single-node/manage.sh",
