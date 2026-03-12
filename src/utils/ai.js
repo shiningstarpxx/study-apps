@@ -1,4 +1,4 @@
-const AI_BRIDGE_STORAGE_KEY = 'AI_BRIDGE_SETTINGS';
+import { STORAGE_KEYS } from '../shared/lib/storage/storageKeys';
 
 const DEFAULT_BRIDGE_SETTINGS = {
   bridgeUrl: '/api/ai',
@@ -10,7 +10,7 @@ function normalizeBridgeUrl(bridgeUrl) {
 
 export function getBridgeSettings() {
   try {
-    const raw = localStorage.getItem(AI_BRIDGE_STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS);
     if (!raw) return DEFAULT_BRIDGE_SETTINGS;
 
     const parsed = { ...DEFAULT_BRIDGE_SETTINGS, ...JSON.parse(raw) };
@@ -30,7 +30,7 @@ export function saveBridgeSettings(settings) {
     ...settings,
     bridgeUrl: normalizeBridgeUrl(settings?.bridgeUrl ?? current.bridgeUrl),
   };
-  localStorage.setItem(AI_BRIDGE_STORAGE_KEY, JSON.stringify(next));
+  localStorage.setItem(STORAGE_KEYS.AI_BRIDGE_SETTINGS, JSON.stringify(next));
   return next;
 }
 

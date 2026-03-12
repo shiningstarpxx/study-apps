@@ -238,10 +238,8 @@ export function addSocraticSession(session) {
 
 // ==================== 错题本系统 (基于记忆曲线) ====================
 
-const WRONG_ANSWERS_KEY = 'billions_english_wrong_answers';
-
 export function getWrongAnswers() {
-  return getItem(WRONG_ANSWERS_KEY) || {};
+  return getItem(STORAGE_KEYS.WRONG_ANSWERS) || {};
 }
 
 // 添加错题（提交测验时调用）
@@ -277,7 +275,7 @@ export function addWrongAnswers(wrongItems) {
     }
   });
 
-  setItem(WRONG_ANSWERS_KEY, data);
+  setItem(STORAGE_KEYS.WRONG_ANSWERS, data);
   return data;
 }
 
@@ -334,7 +332,7 @@ export function updateWrongAnswerSRS(itemId, quality) {
   item.lastReview = today;
 
   data[itemId] = item;
-  setItem(WRONG_ANSWERS_KEY, data);
+  setItem(STORAGE_KEYS.WRONG_ANSWERS, data);
   return item;
 }
 
