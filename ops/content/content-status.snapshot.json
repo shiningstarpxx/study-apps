@@ -1,0 +1,998 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-12T06:23:55.379Z",
+    "totalEpisodes": 12,
+    "totalScenes": 34,
+    "totalCharacters": 6,
+    "totalKeywords": 105,
+    "uniqueKeywords": 104,
+    "contentStatusBreakdown": {
+      "detailed": 3,
+      "curated": 9
+    },
+    "sourceTypeBreakdown": {
+      "original": 16,
+      "inspired": 18
+    },
+    "scenesWithAudio": 1,
+    "scenesWithGrammar": 34,
+    "scenesWithTranslation": 34,
+    "averageScenesPerEpisode": 2.83,
+    "threshold": {
+      "minScenesPerEpisode": 4
+    }
+  },
+  "episodes": [
+    {
+      "id": "S01E01",
+      "season": 1,
+      "episode": 1,
+      "title": "Pilot",
+      "titleCn": "试播集",
+      "contentStatus": "detailed",
+      "sceneCount": 6,
+      "characterCount": 4,
+      "keywordCount": 17,
+      "learningFocusCount": 0,
+      "learningFocus": [],
+      "sourceBreakdown": {
+        "original": 6
+      },
+      "audioSceneCount": 1,
+      "grammarCoverage": 6,
+      "translationCoverage": 6,
+      "flags": [
+        "missing_learning_focus"
+      ]
+    },
+    {
+      "id": "S01E02",
+      "season": 1,
+      "episode": 2,
+      "title": "Naming Rights",
+      "titleCn": "命名权",
+      "contentStatus": "detailed",
+      "sceneCount": 6,
+      "characterCount": 4,
+      "keywordCount": 20,
+      "learningFocusCount": 0,
+      "learningFocus": [],
+      "sourceBreakdown": {
+        "original": 6
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 6,
+      "translationCoverage": 6,
+      "flags": [
+        "missing_learning_focus"
+      ]
+    },
+    {
+      "id": "S01E03",
+      "season": 1,
+      "episode": 3,
+      "title": "YumTime",
+      "titleCn": "美味时光",
+      "contentStatus": "detailed",
+      "sceneCount": 4,
+      "characterCount": 3,
+      "keywordCount": 14,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "风险表达",
+        "市场心理",
+        "二元选择句式"
+      ],
+      "sourceBreakdown": {
+        "original": 4
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 4,
+      "translationCoverage": 4,
+      "flags": []
+    },
+    {
+      "id": "S01E04",
+      "season": 1,
+      "episode": 4,
+      "title": "Short Squeeze",
+      "titleCn": "逼空",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "压力表达",
+        "交易判断",
+        "心理复位"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E05",
+      "season": 1,
+      "episode": 5,
+      "title": "The Good Life",
+      "titleCn": "好生活",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "价值表达",
+        "身份感",
+        "取舍判断"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E06",
+      "season": 1,
+      "episode": 6,
+      "title": "The Deal",
+      "titleCn": "交易",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "谈判表达",
+        "让步语言",
+        "真相杠杆"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E07",
+      "season": 1,
+      "episode": 7,
+      "title": "The Punch",
+      "titleCn": "重拳",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "强硬表达",
+        "情绪后果",
+        "失控代价"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E08",
+      "season": 1,
+      "episode": 8,
+      "title": "Boasts and Rails",
+      "titleCn": "吹嘘与边界",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "边界表达",
+        "规则意识",
+        "自我夸耀"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E09",
+      "season": 1,
+      "episode": 9,
+      "title": "Where the Fuck Is Donnie?",
+      "titleCn": "唐尼到底在哪",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "缺席线索",
+        "损失表达",
+        "团队情绪"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E10",
+      "season": 1,
+      "episode": 10,
+      "title": "Quality of Life",
+      "titleCn": "生活质量",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "生活判断",
+        "自由表达",
+        "长期成本"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E11",
+      "season": 1,
+      "episode": 11,
+      "title": "Magical Thinking",
+      "titleCn": "魔法思维",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "现实检验",
+        "自我欺骗",
+        "投资逻辑"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    },
+    {
+      "id": "S01E12",
+      "season": 1,
+      "episode": 12,
+      "title": "The Conversation",
+      "titleCn": "那场谈话",
+      "contentStatus": "curated",
+      "sceneCount": 2,
+      "characterCount": 2,
+      "keywordCount": 6,
+      "learningFocusCount": 3,
+      "learningFocus": [
+        "摊牌表达",
+        "真相进入房间",
+        "结局语气"
+      ],
+      "sourceBreakdown": {
+        "inspired": 2
+      },
+      "audioSceneCount": 0,
+      "grammarCoverage": 2,
+      "translationCoverage": 2,
+      "flags": [
+        "thin_episode",
+        "non_detailed_content"
+      ]
+    }
+  ],
+  "characters": [
+    {
+      "character": "Bobby Axelrod",
+      "characterCn": "鲍比·阿克斯罗德",
+      "sceneCount": 11,
+      "episodeCount": 8,
+      "episodeIds": [
+        "S01E01",
+        "S01E02",
+        "S01E03",
+        "S01E04",
+        "S01E06",
+        "S01E08",
+        "S01E09",
+        "S01E12"
+      ]
+    },
+    {
+      "character": "Chuck Rhoades",
+      "characterCn": "查克·罗兹",
+      "sceneCount": 11,
+      "episodeCount": 9,
+      "episodeIds": [
+        "S01E01",
+        "S01E02",
+        "S01E03",
+        "S01E05",
+        "S01E06",
+        "S01E08",
+        "S01E10",
+        "S01E11",
+        "S01E12"
+      ]
+    },
+    {
+      "character": "Wendy Rhoades",
+      "characterCn": "温迪·罗兹",
+      "sceneCount": 7,
+      "episodeCount": 7,
+      "episodeIds": [
+        "S01E01",
+        "S01E02",
+        "S01E03",
+        "S01E04",
+        "S01E07",
+        "S01E09",
+        "S01E11"
+      ]
+    },
+    {
+      "character": "Wags",
+      "characterCn": "沃格斯",
+      "sceneCount": 2,
+      "episodeCount": 2,
+      "episodeIds": [
+        "S01E01",
+        "S01E07"
+      ]
+    },
+    {
+      "character": "Lara Axelrod",
+      "characterCn": "拉拉·阿克斯罗德",
+      "sceneCount": 2,
+      "episodeCount": 2,
+      "episodeIds": [
+        "S01E05",
+        "S01E10"
+      ]
+    },
+    {
+      "character": "Taylor Mason",
+      "characterCn": "泰勒·梅森",
+      "sceneCount": 1,
+      "episodeCount": 1,
+      "episodeIds": [
+        "S01E02"
+      ]
+    }
+  ],
+  "issues": {
+    "thinEpisodes": [
+      {
+        "id": "S01E04",
+        "season": 1,
+        "episode": 4,
+        "title": "Short Squeeze",
+        "titleCn": "逼空",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "压力表达",
+          "交易判断",
+          "心理复位"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E05",
+        "season": 1,
+        "episode": 5,
+        "title": "The Good Life",
+        "titleCn": "好生活",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "价值表达",
+          "身份感",
+          "取舍判断"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E06",
+        "season": 1,
+        "episode": 6,
+        "title": "The Deal",
+        "titleCn": "交易",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "谈判表达",
+          "让步语言",
+          "真相杠杆"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E07",
+        "season": 1,
+        "episode": 7,
+        "title": "The Punch",
+        "titleCn": "重拳",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "强硬表达",
+          "情绪后果",
+          "失控代价"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E08",
+        "season": 1,
+        "episode": 8,
+        "title": "Boasts and Rails",
+        "titleCn": "吹嘘与边界",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "边界表达",
+          "规则意识",
+          "自我夸耀"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E09",
+        "season": 1,
+        "episode": 9,
+        "title": "Where the Fuck Is Donnie?",
+        "titleCn": "唐尼到底在哪",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "缺席线索",
+          "损失表达",
+          "团队情绪"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E10",
+        "season": 1,
+        "episode": 10,
+        "title": "Quality of Life",
+        "titleCn": "生活质量",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "生活判断",
+          "自由表达",
+          "长期成本"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E11",
+        "season": 1,
+        "episode": 11,
+        "title": "Magical Thinking",
+        "titleCn": "魔法思维",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "现实检验",
+          "自我欺骗",
+          "投资逻辑"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E12",
+        "season": 1,
+        "episode": 12,
+        "title": "The Conversation",
+        "titleCn": "那场谈话",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "摊牌表达",
+          "真相进入房间",
+          "结局语气"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      }
+    ],
+    "curatedEpisodes": [
+      {
+        "id": "S01E04",
+        "season": 1,
+        "episode": 4,
+        "title": "Short Squeeze",
+        "titleCn": "逼空",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "压力表达",
+          "交易判断",
+          "心理复位"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E05",
+        "season": 1,
+        "episode": 5,
+        "title": "The Good Life",
+        "titleCn": "好生活",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "价值表达",
+          "身份感",
+          "取舍判断"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E06",
+        "season": 1,
+        "episode": 6,
+        "title": "The Deal",
+        "titleCn": "交易",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "谈判表达",
+          "让步语言",
+          "真相杠杆"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E07",
+        "season": 1,
+        "episode": 7,
+        "title": "The Punch",
+        "titleCn": "重拳",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "强硬表达",
+          "情绪后果",
+          "失控代价"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E08",
+        "season": 1,
+        "episode": 8,
+        "title": "Boasts and Rails",
+        "titleCn": "吹嘘与边界",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "边界表达",
+          "规则意识",
+          "自我夸耀"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E09",
+        "season": 1,
+        "episode": 9,
+        "title": "Where the Fuck Is Donnie?",
+        "titleCn": "唐尼到底在哪",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "缺席线索",
+          "损失表达",
+          "团队情绪"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E10",
+        "season": 1,
+        "episode": 10,
+        "title": "Quality of Life",
+        "titleCn": "生活质量",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "生活判断",
+          "自由表达",
+          "长期成本"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E11",
+        "season": 1,
+        "episode": 11,
+        "title": "Magical Thinking",
+        "titleCn": "魔法思维",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "现实检验",
+          "自我欺骗",
+          "投资逻辑"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      },
+      {
+        "id": "S01E12",
+        "season": 1,
+        "episode": 12,
+        "title": "The Conversation",
+        "titleCn": "那场谈话",
+        "contentStatus": "curated",
+        "sceneCount": 2,
+        "characterCount": 2,
+        "keywordCount": 6,
+        "learningFocusCount": 3,
+        "learningFocus": [
+          "摊牌表达",
+          "真相进入房间",
+          "结局语气"
+        ],
+        "sourceBreakdown": {
+          "inspired": 2
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 2,
+        "translationCoverage": 2,
+        "flags": [
+          "thin_episode",
+          "non_detailed_content"
+        ]
+      }
+    ],
+    "missingLearningFocusEpisodes": [
+      {
+        "id": "S01E01",
+        "season": 1,
+        "episode": 1,
+        "title": "Pilot",
+        "titleCn": "试播集",
+        "contentStatus": "detailed",
+        "sceneCount": 6,
+        "characterCount": 4,
+        "keywordCount": 17,
+        "learningFocusCount": 0,
+        "learningFocus": [],
+        "sourceBreakdown": {
+          "original": 6
+        },
+        "audioSceneCount": 1,
+        "grammarCoverage": 6,
+        "translationCoverage": 6,
+        "flags": [
+          "missing_learning_focus"
+        ]
+      },
+      {
+        "id": "S01E02",
+        "season": 1,
+        "episode": 2,
+        "title": "Naming Rights",
+        "titleCn": "命名权",
+        "contentStatus": "detailed",
+        "sceneCount": 6,
+        "characterCount": 4,
+        "keywordCount": 20,
+        "learningFocusCount": 0,
+        "learningFocus": [],
+        "sourceBreakdown": {
+          "original": 6
+        },
+        "audioSceneCount": 0,
+        "grammarCoverage": 6,
+        "translationCoverage": 6,
+        "flags": [
+          "missing_learning_focus"
+        ]
+      }
+    ],
+    "hiddenCharacterScenes": [
+      {
+        "sceneId": "S01E01-002",
+        "episodeId": "S01E01",
+        "character": "Chuck Rhoades",
+        "dialogue": "I don't just want toeli­minate the bugs. I want to napalm the entire jungle."
+      }
+    ],
+    "scenesWithoutAudio": [
+      "S01E01-002",
+      "S01E01-003",
+      "S01E01-004",
+      "S01E01-005",
+      "S01E01-006",
+      "S01E02-001",
+      "S01E02-002",
+      "S01E02-003",
+      "S01E02-004",
+      "S01E02-005",
+      "S01E02-006",
+      "S01E03-001",
+      "S01E03-002",
+      "S01E03-003",
+      "S01E03-004",
+      "S01E04-001",
+      "S01E04-002",
+      "S01E05-001",
+      "S01E05-002",
+      "S01E06-001",
+      "S01E06-002",
+      "S01E07-001",
+      "S01E07-002",
+      "S01E08-001",
+      "S01E08-002",
+      "S01E09-001",
+      "S01E09-002",
+      "S01E10-001",
+      "S01E10-002",
+      "S01E11-001",
+      "S01E11-002",
+      "S01E12-001",
+      "S01E12-002"
+    ]
+  }
+}

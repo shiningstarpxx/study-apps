@@ -1,0 +1,33 @@
+Billions English 内容基线审计
+生成时间: 2026-03-12T06:23:55.379Z
+
+## 摘要
+- Episode 数: 12
+- Scene 数: 34
+- 角色数: 6
+- 关键词总数: 105
+- 去重关键词数: 104
+- 平均每集场景数: 2.83
+- 内容状态分布: {"detailed":3,"curated":9}
+- 来源类型分布: {"original":16,"inspired":18}
+
+## 需优先处理
+- 低于 4 个场景的集数: S01E04(2), S01E05(2), S01E06(2), S01E07(2), S01E08(2), S01E09(2), S01E10(2), S01E11(2), S01E12(2)
+- 非 detailed 内容集数: S01E04, S01E05, S01E06, S01E07, S01E08, S01E09, S01E10, S01E11, S01E12
+- 缺少 learningFocus 的集数: S01E01, S01E02
+- 缺少音频的场景数: 33
+- 含隐藏字符的场景: S01E01-002
+
+## 每集概览
+- S01E01 试播集 | scenes=6 | status=detailed | source={"original":6} | flags=missing_learning_focus
+- S01E02 命名权 | scenes=6 | status=detailed | source={"original":6} | flags=missing_learning_focus
+- S01E03 美味时光 | scenes=4 | status=detailed | source={"original":4} | flags=none
+- S01E04 逼空 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E05 好生活 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E06 交易 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E07 重拳 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E08 吹嘘与边界 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E09 唐尼到底在哪 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E10 生活质量 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E11 魔法思维 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
+- S01E12 那场谈话 | scenes=2 | status=curated | source={"inspired":2} | flags=thin_episode,non_detailed_content
