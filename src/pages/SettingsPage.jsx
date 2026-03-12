@@ -1,19 +1,20 @@
 import { useState } from 'react';
+import { localBridgeSettingsRepository } from '../modules/settings';
 import { getSettings, updateSettings } from '../utils/storage';
-import { getBridgeSettings, saveBridgeSettings, checkBridgeHealth } from '../utils/ai';
+import { checkBridgeHealth } from '../utils/ai';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState(getSettings());
-  const [bridgeUrl, setBridgeUrl] = useState(getBridgeSettings().bridgeUrl);
+  const [bridgeUrl, setBridgeUrl] = useState(localBridgeSettingsRepository.getSettings().bridgeUrl);
   const [bridgeStatus, setBridgeStatus] = useState('idle'); // idle, checking, ready, error
   const [saveStatus, setSaveStatus] = useState('');
 
   const handleSaveSettings = () => {
     updateSettings(settings);
-    
+
     // Save bridge settings
-    saveBridgeSettings({ bridgeUrl: bridgeUrl.trim() });
-    
+    localBridgeSettingsRepository.saveSettings({ bridgeUrl: bridgeUrl.trim() });
+
     setSaveStatus('保存成功！');
     setTimeout(() => setSaveStatus(''), 2000);
   };
